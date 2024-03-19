@@ -11,6 +11,9 @@ app.use(compression()); //* giảm dung lượng trả về cho client
 //! end init middleware
 
 //! init db
+const database = require('./databases/init.mongodb');
+const {checkOverload} = require('./helpers/check.connect');
+// checkOverload();
 //! end init db
 
 //! init routes
