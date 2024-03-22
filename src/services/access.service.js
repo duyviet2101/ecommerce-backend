@@ -31,26 +31,19 @@ class AccessService {
 
             if (newShop) {
                 //! create privateKey, publicKey
-                const {privateKey, publicKey} = crypto.generateKeyPairSync('rsa', {
-                    modulusLength: 4096,
-                    publicKeyEncoding: {
-                        type: 'pkcs1', // pkcs1: RSA public key format - public key cryptography standard #1
-                        format: 'pem'
-                    },
-                    privateKeyEncoding: {
-                        type: 'pkcs1',
-                        format: 'pem'
-                    }
-                })
+
+                const privateKey = crypto.randomBytes(64).toString('hex');
+                const publicKey = crypto.randomBytes(64).toString('hex');
 
                 // console.log(`[P]::signUp::privateKey::`, privateKey);
                 // console.log(`[P]::signUp::publicKey::`, publicKey);
 
-                const publicKeyString = await KeyTokenService.createKeyToken({
+                const keyStore = await KeyTokenService.createKeyToken({
                     userId: newShop._id,
-                    publicKey
+                    publicKey,
+                    privateKey
                 })
-                if (!publicKeyString)
+                if (!keyStore)
                 {
                     return {
                         code: '500',
@@ -59,13 +52,11 @@ class AccessService {
                     }
                 }
                 //! end create privateKey, publicKey
-                const publicKeyObject = crypto.createPublicKey(publicKey);
-                // console.log(`[P]::signUp::publicKeyObject::`, publicKeyObject);
                 //! create tokenPair
                 const tokens = await createTokenPair({
                     userId: newShop._id,
                     email
-                }, publicKeyObject, privateKey);
+                }, publicKey, privateKey);
                 // console.log(`[P]::signUp::tokens::`, tokens);
 
                 return {
