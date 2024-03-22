@@ -10,6 +10,8 @@ const app = express();
 app.use(morgan('dev')); //* app.use(morgan('combined'));
 app.use(helmet()); //* che giấu thông tin header, bảo vệ khỏi các cuộc tấn công
 app.use(compression()); //* giảm dung lượng trả về cho client
+app.use(express.json()); //* parse json
+app.use(express.urlencoded({extended: true})); //* parse urlencoded
 //! end init middleware
 
 //! init db
@@ -19,12 +21,7 @@ const {checkOverload} = require('./helpers/check.connect');
 //! end init db
 
 //! init routes
-app.get('/', (req, res) => {
-    const strCompress = 'Hello World';
-    res.status(200).json({
-        message: strCompress
-    });
-});
+app.use('/', require('./routes/index.js'))
 //! end init routes
 
 //! handle error
