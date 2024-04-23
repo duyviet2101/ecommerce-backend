@@ -25,6 +25,7 @@ class AccessService {
                 }
             
             const passwordHash = await bcrypt.hash(password, 10);
+            
             const newShop = await shopModel.create({
                 name, email, password: passwordHash, roles: [roleShop.SHOP]
             })
