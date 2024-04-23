@@ -69,14 +69,11 @@ class AccessService {
             // console.log(`[P]::signUp::tokens::`, tokens);
 
             return {
-                code: '201',
-                metadata: {
-                    shop: getInfoData({
-                        fileds: ['_id', 'name', 'email', 'status', 'roles'],
-                        object: newShop
-                    }),
-                    tokens
-                }
+                shop: getInfoData({
+                    fileds: ['_id', 'name', 'email', 'status', 'roles'],
+                    object: newShop
+                }),
+                tokens
             }
             //! end create tokenPair
         }
