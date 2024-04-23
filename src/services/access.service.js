@@ -12,8 +12,12 @@ const {
 const {
     BadRequestError,
     ForbiddenError,
-    InternalServerError
+    InternalServerError,
+    AuthenticationError
 } = require('../core/error.response.js');
+const {
+    findByEmail
+} = require("./shop.service.js");
 
 const roleShop = {
     SHOP: 'SHOP',
@@ -23,6 +27,52 @@ const roleShop = {
 }
 
 class AccessService {
+
+    /**
+     * 1. Check email exists
+     * 2. Check password
+     * 3. Create AT and RT and save
+     * 4. Generate tokens
+     * 5. Get data return login
+     */
+    static login = async ({
+        email,
+        password,
+        refreshToken = null
+    }) => {
+        //1.
+        const foundShop = await findByEmail({
+            email
+        });
+        if (!foundShop)
+            throw new BadRequestError('Email not found');
+        //2.
+        const isPasswordMatch = await bcrypt.compare(password, foundShop.password);
+        if (!isPasswordMatch)
+            throw new AuthenticationError('Password is incorrect');
+        //3.
+        const privateKey = crypto.randomBytes(64).toString('hex');
+        const publicKey = crypto.randomBytes(64).toString('hex');
+        //4. 
+        const tokens = await createTokenPair({
+            userId: foundShop._id,
+            email
+        }, publicKey, privateKey);
+        await KeyTokenService.createKeyToken({
+            userId: foundShop._id,
+            publicKey,
+            privateKey,
+            refreshToken: tokens.refreshToken
+        });
+        //5. 
+        return {
+            shop: getInfoData({
+                fileds: ['_id', 'name', 'email', 'status', 'roles'],
+                object: foundShop
+            }),
+            tokens
+        }
+    };
 
     static signUp = async ({
         name,

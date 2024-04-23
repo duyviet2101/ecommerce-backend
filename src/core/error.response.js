@@ -32,7 +32,16 @@ class ConflictError extends ErrorResponse {
     }
 }
 
+class AuthenticationError extends ErrorResponse {
+    constructor(message = httpStatusCode.ReasonPhrases.UNAUTHORIZED, status = httpStatusCode.StatusCodes.UNAUTHORIZED) {
+        super(message, status)
+    }
+}
+
 module.exports = {
     BadRequestError,
     ForbiddenError,
+    InternalServerError,
+    ConflictError,
+    AuthenticationError
 }
