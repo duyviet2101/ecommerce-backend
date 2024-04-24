@@ -1,4 +1,7 @@
 const keytokenModel = require("../models/keytoken.model");
+const {
+    Types
+} = require('mongoose');
 
 class KeyTokenService {
 
@@ -28,6 +31,16 @@ class KeyTokenService {
             console.log(error);
             return error;
         }
+    }
+
+    static findByUserId = async (userId) => {
+        return await keytokenModel.findOne({
+            user: new Types.ObjectId(userId)
+        }).lean();
+    };
+
+    static removeKeyById = async (id) => {
+        return await keytokenModel.findByIdAndDelete(id).select('_id');
     }
 
 }

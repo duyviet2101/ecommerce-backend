@@ -28,6 +28,12 @@ const roleShop = {
 
 class AccessService {
 
+    static logout = async (keyStore) => {
+        const delKey = await KeyTokenService.removeKeyById(keyStore._id);
+        if (!delKey) throw new InternalServerError('Error delete keyStore');
+        return delKey;
+    }
+
     /**
      * 1. Check email exists
      * 2. Check password

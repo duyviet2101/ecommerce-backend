@@ -38,10 +38,17 @@ class AuthenticationError extends ErrorResponse {
     }
 }
 
+class NotFoundError extends ErrorResponse {
+    constructor(message = httpStatusCode.ReasonPhrases.NOT_FOUND, status = httpStatusCode.StatusCodes.NOT_FOUND) {
+        super(message, status)
+    }
+}
+
 module.exports = {
     BadRequestError,
     ForbiddenError,
     InternalServerError,
     ConflictError,
-    AuthenticationError
+    AuthenticationError,
+    NotFoundError
 }
