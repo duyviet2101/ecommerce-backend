@@ -38,7 +38,7 @@ const productSchema = new Schema({
     required: true,
   },
   product_attributes: {
-    type: Types.Mixed,
+    type: Schema.Types.Mixed,
     required: true,
   },
 }, {
