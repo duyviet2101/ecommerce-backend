@@ -12,7 +12,10 @@ class ProductController {
       message: 'Create product successfully',
       metadata: await ProductService.createProduct({
         type: req.body.product_type,
-        payload: req.body
+        payload: {
+          ...req.body,
+          product_shop: req.user.userId
+        }
       })
     }).send(res);
   }
