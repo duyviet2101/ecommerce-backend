@@ -29,32 +29,25 @@ const roleShop = {
 
 class AccessService {
 
-    static handlerRefreshToken = async (refreshToken) => {
+    static handlerRefreshToken = async ({
+        refreshToken,
+        user,
+        keyStore
+    }) => {
+        const {
+            userId,
+            email 
+        } = user;
 
-        //1. check token used?
-        const foundToken = await KeyTokenService.findByRefreshTokenUsed(refreshToken);
-        if (foundToken) {
-            // decode to know who is this?
-            const {
-                userId,
-                email
-            } = await verifyJWT(refreshToken, foundToken.privateKey);
-            // xoa token trong keystore
+        if (keyStore.refreshTokenUsed.includes(refreshToken)) {
             await KeyTokenService.deleteKeyByUserId(userId);
             throw new ForbiddenError('Token used! Please login again!');
         }
 
-        //2. if not used
-        const holderToken = await KeyTokenService.findByRefreshToken(refreshToken);
-        if (!holderToken) throw new AuthenticationError('Token not found');
+        if (keyStore.refreshToken !== refreshToken) {
+            throw new ForbiddenError('Token invalid');
+        }
 
-        //3. verify refreshToken
-        const {
-            userId,
-            email
-        } = await verifyJWT(refreshToken, holderToken.privateKey);
-        if (!userId || !email) throw new AuthenticationError('Token invalid');
-        //4. check userId
         const foundShop = await findByEmail({
             email
         });
@@ -64,17 +57,18 @@ class AccessService {
         const tokens = await createTokenPair({
             userId: foundShop._id,
             email
-        }, holderToken.publicKey, holderToken.privateKey);
+        }, keyStore.publicKey, keyStore.privateKey);
 
         //6. update refreshTokenUsed
-        await holderToken.updateOne({
+        await keyStore.updateOne({
             $set: {
                 refreshToken: tokens.refreshToken
             },
             $addToSet: {
                 refreshTokenUsed: refreshToken
             }
-        })
+        });
+        
 
         return {
             user: {
