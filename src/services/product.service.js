@@ -5,7 +5,8 @@ const {
 const {
   Product,
   Clothing,
-  Electronics
+  Electronics,
+  Furniture
 } = require('../models/product.model.js')
 
 //  define factory class
@@ -13,18 +14,23 @@ class ProductFactory {
   /**
    * type: 'Clothing' | 'Electronics'
    */
+
+  static productRegistry = {}
+
+  static registerProductType(type, productClass) {
+    ProductFactory.productRegistry[type] = productClass
+  }
+  
   static async createProduct({
     type,
     payload
   }) {
-    switch (type) {
-      case 'Clothing':
-        return await new ClothingClass(payload).createProduct();
-      case 'Electronics':
-        return await new ElectronicsClass(payload).createProduct();
-      default:
-        throw new BadRequestError(`Invalid product type::: ${type}`);
+    const productClass = ProductFactory.productRegistry[type]
+    if (!productClass) {
+      throw new BadRequestError(`Invalid product type::: ${type}`);
     }
+
+    return await new productClass(payload).createProduct();
   }
 }
 
@@ -129,5 +135,27 @@ class ElectronicsClass extends ProductBase {
     return newProduct;
   }
 }
+
+class FurnitureClass extends ProductBase {
+  async createProduct() {
+    const newFurniture = await Furniture.create({
+      product_shop: this.product_shop,
+      ...this.product_attributes
+    });
+    if (!newFurniture)
+      throw new BadRequestError('Failed to create new furniture product');
+
+    const newProduct = await super.createProduct(newFurniture._id);
+    if (!newProduct)
+      throw new BadRequestError('Failed to create new product');
+
+    return newProduct;
+  }
+}
+
+// register product type
+ProductFactory.registerProductType('Clothing', ClothingClass);
+ProductFactory.registerProductType('Electronics', ElectronicsClass);
+ProductFactory.registerProductType('Furniture', FurnitureClass);
 
 module.exports = ProductFactory;
