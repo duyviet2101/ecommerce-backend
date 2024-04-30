@@ -14,7 +14,9 @@ const {
   findAllPublishedForShop,
   queryProduct,
   unPublishProductByShop,
-  searchProductByUser
+  searchProductByUser,
+  getAllProducts,
+  getProduct
 } = require('../models/repositories/product.repo.js')
 
 //  define factory class
@@ -94,8 +96,38 @@ class ProductFactory {
     });
   }
 
-  static async searchProduct({keySearch}) {
-    return await searchProductByUser({keySearch});
+  static async searchProduct({
+    keySearch
+  }) {
+    return await searchProductByUser({
+      keySearch
+    });
+  }
+
+  static async getAllProducts({
+    limit = 50,
+    page = 1,
+    sort = 'ctime',
+    filter = {
+      isPublished: true
+    }
+  }) {
+    return await getAllProducts({
+      limit,
+      page,
+      sort,
+      filter,
+      select: ['product_name', 'product_price', 'product_thumb']
+    })
+  }
+
+  static async getProduct({
+    product_id
+  }) {
+    return await getProduct({
+      product_id,
+      unSelect: ['__v']
+    });
   }
 }
 

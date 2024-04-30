@@ -8,6 +8,8 @@ const {
 } = require('../../auth/authUtils.js');
 
 router.get('/search/:keySearch', asyncHandler(productController.searchProduct));
+router.get('', asyncHandler(productController.getAllProducts));
+router.get('/:id', asyncHandler(productController.getProduct));
 
 router.use(authentication);
 
