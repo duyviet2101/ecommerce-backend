@@ -16,8 +16,10 @@ const {
   unPublishProductByShop,
   searchProductByUser,
   getAllProducts,
-  getProduct
+  getProduct,
+  updateProductById
 } = require('../models/repositories/product.repo.js')
+const { removeUndefined, updateNestedObjectParser } = require('../utils/index.js')
 
 //  define factory class
 class ProductFactory {
@@ -41,6 +43,19 @@ class ProductFactory {
     }
 
     return await new productClass(payload).createProduct();
+  }
+
+  static async updateProduct({
+    type,
+    payload,
+    productId
+  }) {
+    const productClass = ProductFactory.productRegistry[type]
+    if (!productClass) {
+      throw new BadRequestError(`Invalid product type::: ${type}`);
+    }
+
+    return await new productClass(payload).updateProduct(productId);
   }
 
   //PUT
@@ -196,6 +211,15 @@ class ProductBase {
       _id: product_id
     });
   }
+
+  // update product
+  async updateProduct(productId, bodyUpdate) {
+    return updateProductById({
+      productId,
+      bodyUpdate,
+      model: Product,
+    })
+  }
 }
 
 // define sub-class for different product types
@@ -214,6 +238,23 @@ class ClothingClass extends ProductBase {
 
     return newProduct;
   }
+
+  async updateProduct(productId) {
+    //1. remove null/undefined fields
+    const objectParams = removeUndefined(this);
+    //2. Check update product attributes or not?
+    if (objectParams.product_attributes) {
+      // update child
+      await updateProductById({
+        productId,
+        bodyUpdate: updateNestedObjectParser(objectParams.product_attributes),
+        model: Clothing,
+      })
+    }
+
+    const updateProduct = await super.updateProduct(productId, updateNestedObjectParser(objectParams));
+    return updateProduct;
+  }
 }
 
 class ElectronicsClass extends ProductBase {
@@ -231,6 +272,23 @@ class ElectronicsClass extends ProductBase {
 
     return newProduct;
   }
+
+  async updateProduct(productId) {
+    //1. remove null/undefined fields
+    const objectParams = removeUndefined(this);
+    //2. Check update product attributes or not?
+    if (objectParams.product_attributes) {
+      // update child
+      await updateProductById({
+        productId,
+        bodyUpdate: updateNestedObjectParser(objectParams.product_attributes),
+        model: Electronics,
+      })
+    }
+
+    const updateProduct = await super.updateProduct(productId, updateNestedObjectParser(objectParams));
+    return updateProduct;
+  }
 }
 
 class FurnitureClass extends ProductBase {
@@ -247,6 +305,23 @@ class FurnitureClass extends ProductBase {
       throw new BadRequestError('Failed to create new product');
 
     return newProduct;
+  }
+
+  async updateProduct(productId) {
+    //1. remove null/undefined fields
+    const objectParams = removeUndefined(this);
+    //2. Check update product attributes or not?
+    if (objectParams.product_attributes) {
+      // update child
+      await updateProductById({
+        productId,
+        bodyUpdate: updateNestedObjectParser(objectParams.product_attributes),
+        model: Furniture,
+      })
+    }
+
+    const updateProduct = await super.updateProduct(productId, updateNestedObjectParser(objectParams));
+    return updateProduct;
   }
 }
 

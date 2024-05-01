@@ -152,6 +152,17 @@ const unPublishProductByShop = async ({
   return res;
 }
 
+const updateProductById = async ({
+  productId,
+  bodyUpdate,
+  model,
+  isNew = true
+}) => {
+  return await model.findByIdAndUpdate(productId, bodyUpdate, {
+    new: isNew
+  });
+}
+
 module.exports = {
   findAllDraftsForShop,
   publishProductByShop,
@@ -160,5 +171,6 @@ module.exports = {
   unPublishProductByShop,
   searchProductByUser,
   getAllProducts,
-  getProduct
+  getProduct,
+  updateProductById
 };
