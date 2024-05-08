@@ -10,6 +10,8 @@ router.use('/v1/api/product', require('./product/index.js'));
 
 router.use('/v1/api/discount', require('./discount/index.js'));
 
+router.use('/v1/api/cart', require('./cart/index.js'));
+
 router.use('/v1/api', require('./access/index.js'));
 
 module.exports = router;

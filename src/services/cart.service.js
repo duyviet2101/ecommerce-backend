@@ -1,4 +1,12 @@
 const Cart = require('../models/cart.model');
+const {
+  getProduct
+} = require('../models/repositories/product.repo');
+
+const {
+  NotFoundError
+} = require('../core/error.response.js');
+const { Types } = require('mongoose');
 
 class CartService {
   // repo cart
@@ -10,7 +18,7 @@ class CartService {
       cart_userId: userId,
       cart_status: 'active'
     };
-    
+
     return await Cart.findOneAndUpdate(query, {
       $push: {
         cart_products: product
@@ -36,11 +44,11 @@ class CartService {
     const query = {
       cart_userId: userId,
       cart_status: 'active',
-      'cart_products._id': productId
+      'cart_products.productId': productId
     };
-    
+
     return await Cart.findOneAndUpdate(query, {
-      $set: {
+      $inc: {
         'cart_products.$.quantity': quantity
       }
     }, {
@@ -65,7 +73,12 @@ class CartService {
       });
     }
 
-    if (userCart.cart_products.length === 0) {
+    // if (userCart.cart_products.length === 0) {
+    //   userCart.cart_products.push(product);
+    //   userCart.cart_count_product = userCart.cart_products.length;
+    //   return await userCart.save();
+    // }
+    if (userCart.cart_products.filter(p => p.productId === product.productId).length === 0) {
       userCart.cart_products.push(product);
       userCart.cart_count_product = userCart.cart_products.length;
       return await userCart.save();
@@ -77,7 +90,76 @@ class CartService {
     });
   }
 
-  
+  static async addToCartV2({
+    userId,
+    shop_order_ids = {}
+  }) {
+    const {
+      productId,
+      quantity,
+      old_quantity
+    } = shop_order_ids[0]?.item_products[0];
+
+    const foundProduct = await getProduct({
+      product_id: new Types.ObjectId(productId)
+    });
+
+    if (!foundProduct) {
+      throw new NotFoundError('Product not found');
+    }
+
+    if (foundProduct.product_shop.toString() !== shop_order_ids[0].shopId) {
+      throw new NotFoundError('Product not found');
+    }
+
+    if (quantity === 0) {
+      // remove product from cart
+    }
+
+    return await CartService.updateUserCartQuantity({
+      userId,
+      product: {
+        productId,
+        quantity: quantity - old_quantity
+      }
+    });
+    
+  }
+
+  static async deleteUserCart({
+    userId,
+    productId
+  }) {
+    const query = {
+      cart_userId: +userId,
+      cart_status: 'active',
+      'cart_products.productId': productId
+    };
+
+    console.log(query); 
+
+    return await Cart.findOneAndUpdate(query, {
+      $pull: {
+        cart_products: {
+          productId: productId
+        }
+      },
+      $inc: {
+        cart_count_product: -1
+      }
+    }, {
+      new: true
+    });
+  }
+
+  static async getListUserCart({
+    userId
+  }) {
+    return await Cart.findOne({
+      cart_userId: +userId,
+      cart_status: 'active'
+    });
+  }
 }
 
 module.exports = CartService;
