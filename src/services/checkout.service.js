@@ -1,4 +1,5 @@
 const Cart = require("../models/cart.model");
+const Order = require("../models/order.model");
 const {
   findCartById
 } = require("../models/repositories/cart.repo");
@@ -9,6 +10,7 @@ const {
 } = require("../core/error.response");
 const { checkProdutByServer } = require("../models/repositories/product.repo");
 const { getDiscountAmount } = require("./discount.service");
+const { acquireLock, releaseLock } = require("./redis.service");
 
 class CheckoutService {
   static async checkoutReview({
@@ -80,6 +82,63 @@ class CheckoutService {
       shop_order_ids_new
     }
   }
+
+  static async orderByUser({
+    shop_order_ids,
+    cartId,
+    userId,
+    user_address = {},
+    user_payment = {}
+  }) {
+    const {
+      shop_order_ids_new,
+      checkout_order
+    } = await CheckoutService.checkoutReview({
+      cartId,
+      userId,
+      shop_order_ids
+    });
+
+    // check lai xem vuot ton kho hay khong?
+    const products = shop_order_ids_new.flatMap(order => order.item_products);
+    const acquireLock = [];
+    for (let i = 0; i < products.length; i++) {
+      const {productId, quantity} = products[i];
+      const keyLock = await acquireLock(productId, quantity, cartId);
+      acquireLock.push(keyLock ? true : false);
+      if (keyLock) {
+        await releaseLock(keyLock);
+      }
+    }
+
+    //check san pham het hang trong kho
+    if (acquireLock.includes(false)) {
+      throw new BadRequestError("Some products are updated, please check again");
+    }
+
+    const newOrder = await Order.create({
+      order_userId: userId,
+      order_checkout: checkout_order,
+      order_shipping: user_address,
+      order_payment: user_payment,
+      order_products: shop_order_ids_new
+    });
+
+    // neu insert thanh cong, remove product trong cart
+    if (newOrder) {
+
+    }
+
+    return newOrder;
+  }
+
+  /**
+   * 1. query orders 
+   * 2. query one order
+   * 3. cancel order
+   * 4. update order [shop | admin]
+   */
+
 }
 
 module.exports = CheckoutService;
