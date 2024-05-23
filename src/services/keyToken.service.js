@@ -27,6 +27,7 @@ class KeyTokenService {
             };
 
             const tokens = await keytokenModel.findOneAndUpdate(filter, update, options);
+            return tokens;
         } catch (error) {
             console.log(error);
             return error;
