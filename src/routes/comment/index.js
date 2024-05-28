@@ -12,4 +12,6 @@ router.post('', asyncHandler(CommentController.createComment));
 
 router.get('', asyncHandler(CommentController.getCommentsByParentId));
 
+router.delete('', asyncHandler(CommentController.deleteComments));
+
 module.exports = router;

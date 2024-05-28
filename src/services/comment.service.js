@@ -1,6 +1,8 @@
 const { Types } = require('mongoose');
 const Comment = require('../models/comment.model');
+const { Product } = require('../models/product.model');
 const { NotFoundError } = require('../core/error.response');
+const { getProduct } = require('../models/repositories/product.repo');
 
 class CommentService {
 
@@ -107,6 +109,47 @@ class CommentService {
     return comments;
   }
 
+  static async deleteComments({
+    commentId, 
+    productId
+  }) {
+    // check product exist db
+    const fountProduct = await Product.findById(productId);
+    if (!fountProduct) {
+      throw new NotFoundError('Product not found');
+    }
+
+    //1.xac dinh ledt vs right of commendid
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      throw new NotFoundError('Comment not found');
+    }
+
+    const left = comment.comment_left;
+    const right = comment.comment_right;
+
+    //2. calculate width (number of nodes) of comment left - right + 1
+    const width = right - left + 1;
+    //3. delete all comment between left and right
+    await Comment.deleteMany({
+      comment_productId: new Types.ObjectId(productId),
+      comment_left: { $gte: left, $lte: right },
+    })
+    //4. update left of all comment left, right
+    await Comment.updateMany({
+      comment_productId: new Types.ObjectId(productId),
+      comment_right: { $gt: right }
+    }, {
+      $inc: { comment_right: -width }
+    });
+
+    await Comment.updateMany({
+      comment_productId: new Types.ObjectId(productId),
+      comment_left: { $gt: right }
+    }, {
+      $inc: { comment_left: -width }
+    });
+  }
 }
 
 module.exports = CommentService;
