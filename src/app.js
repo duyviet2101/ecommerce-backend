@@ -16,6 +16,12 @@ app.use(express.urlencoded({
 })); //* parse urlencoded
 //! end init middleware
 
+//! test pub.sub redis
+require('./tests/inventory.test');
+const productTest = require('./tests/product.test');
+productTest.purchaseProduct('0001', 10);
+//! end test pub.sub redis
+
 //! init db
 const database = require('./databases/init.mongodb');
 const {
